@@ -3,7 +3,7 @@ import ballerina/log;
 import ballerina/mysql;
 import ballerina/io;
 
-// Type Customer is created to store details of a student.
+// Type Customer is created to store details of a customer.
 type Customer record {
     int id;
     int age;
@@ -164,7 +164,7 @@ public function insertData(string name, int age, int mobNo, string email) return
 # + mobNo - This is the mobile number of the customer added which is passed as parameter to build up the query.
 # + return -This function returns a table with Customer type.
 
-// Function to get the generated Id of the student recently added.
+// Function to get the generated Id of the customer recently added.
 public function getId(int mobNo) returns table<Customer> {
     //Select data from database by invoking select action.
 

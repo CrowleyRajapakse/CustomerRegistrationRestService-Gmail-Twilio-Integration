@@ -13,6 +13,39 @@ twilio:Client twilioClient = new({
         authToken: config:getAsString(TWILIO_AUTH_TOKEN)
     });
 
+# A valid access token with gmail access.
+string accessToken = config:getAsString("ACCESS_TOKEN");
+
+# The client ID for your application.
+string clientId = config:getAsString("CLIENT_ID");
+
+# The client secret for your application.
+string clientSecret = config:getAsString("CLIENT_SECRET");
+
+# A valid refreshToken with gmail access.
+string refreshToken = config:getAsString("REFRESH_TOKEN");
+
+# Sender email address.
+string senderEmail = config:getAsString("SENDER");
+
+# The user's email address.
+string userId = config:getAsString("USER_ID");
+
+# GMail client endpoint declaration with oAuth2 client configurations.
+gmail:Client gmailClient = new({
+        clientConfig: {
+            auth: {
+                scheme: http:OAUTH2,
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+                clientId: clientId,
+                clientSecret: clientSecret
+            }
+        }
+    });
+
+
+
 public function main() {
     http:Request req = new;
     int operation = 0;
@@ -90,17 +123,109 @@ function addCustomer(http:Request req) {
             string message = "Status: " + jsonMsg["Status"] .toString() + " Added Customer Id :- " +
                 jsonMsg["id"].toString();
             io:println(message);
-            boolean result = sendSmsToCustomers(sampleQuery);
-            if (result) {
-                log:printDebug("CustomerRegistration-Twilio Integration -> Promotional SMS sending process successfully completed!");
+
+            log:printDebug("CustomerRegistration-Twilio  Integration -> Sending notification to customers");
+            //boolean resultSMS = sendSmsToCustomers(mobile);
+            boolean resultSMS = true;
+            if (resultSMS) {
+                log:printDebug("CustomerRegistration-Twilio Integration -> Registration SMS sending process successfully completed!");
             } else {
-                log:printDebug("CustomerRegistration-Twilio Integration -> Promotional SMS sending process failed!");
+                log:printDebug("CustomerRegistration-Twilio Integration -> Registration SMS sending process failed!");
             }
+
+            log:printDebug("CustomerRegistration-Gmail Integration -> Sending notification to customers");
+            boolean resultEmail = sendNotification(email);
+            if (resultEmail) {
+                log:printDebug("CustomerRegistration-Gmail Integration -> Sending email notification to customers successfully completed!");
+            } else {
+                log:printDebug("CustomerRegistration-Gmail Integration -> Sending email notification to customers failed!");
+            }
+
         } else {
             log:printError("Error in extracting the JSON payload from the response.", err = jsonMsg);
         }
     } else {
         log:printError("Error in the obtained response", err = resp);
+    }
+}
+
+# Utility function integrate CustomerRegistrationService and Twilio connectors and indicates the status of sending.
+#
+# + return - State of whether the process of sending SMS to customers are success or not
+function sendSmsToCustomers(string mobile) returns boolean {
+
+    boolean isSuccess= false;
+    string toMobile = mobile;
+    string messageBody = config:getAsString(TWILIO_MESSAGE);
+    string fromMobile = config:getAsString(TWILIO_FROM_MOBILE);
+    string message = messageBody;
+    var response = twilioClient->sendSms(fromMobile, toMobile, message);
+    if (response is twilio:SmsResponse) {
+        if (response.sid != EMPTY_STRING) {
+            log:printDebug("Twilio Connector -> SMS successfully sent to " + toMobile);
+            return true;
+        }
+    } else {
+        log:printDebug("Twilio Connector -> SMS failed sent to " + toMobile);
+        log:printError(<string>response.detail().message);
+    }
+    return isSuccess;
+}
+
+# Returns an indication of the status of the sending notification to the customers.
+#
+# + return - State of whether the process of sending notification is success or not
+function sendNotification(string email) returns boolean {
+
+    boolean isSuccess = false;
+        string customerEmail = email;
+        string subject = "Thank You for Registering ";
+        isSuccess = sendMail(customerEmail, subject, getCustomEmailTemplate());
+        if (!isSuccess) {
+            return false;
+        }
+        return isSuccess;
+}
+
+# Get the customized email template.
+#
+# + return - String customized email message.
+function getCustomEmailTemplate() returns string {
+    string emailTemplate = "<h2> Hi New User"+ " </h2>";
+    emailTemplate = emailTemplate + "<h3> Thank you for Registering  with us" + " ! </h3>";
+    emailTemplate = emailTemplate + "<p> If you still have questions" +
+        ", please contact us and we will get in touch with you right away ! </p> ";
+    return emailTemplate;
+}
+
+# Send email with the given message body to the specified recipient for dowloading the specified product and return the
+# indication of sending is succss or not.
+#
+# + customerEmail - Recipient's email address.
+# + subject - Subject of the email.
+# + messageBody - Email message body to send.
+# + return - The status of sending email success or not
+function sendMail(string customerEmail, string subject, string messageBody) returns boolean {
+    //Create html message
+    gmail:MessageRequest messageRequest = {};
+    messageRequest.recipient = customerEmail;
+    messageRequest.sender = senderEmail;
+    messageRequest.subject = subject;
+    messageRequest.messageBody = messageBody;
+    messageRequest.contentType = gmail:TEXT_HTML;
+
+    //Send mail
+    var sendMessageResponse = gmailClient->sendMessage(userId, untaint messageRequest);
+    string messageId;
+    string threadId;
+    if (sendMessageResponse is (string, string)) {
+        (messageId, threadId) = sendMessageResponse;
+        log:printInfo("Sent email to " + customerEmail + " with message Id: " + messageId +
+                " and thread Id:" + threadId);
+        return true;
+    } else {
+        log:printInfo(<string>sendMessageResponse.detail().message);
+        return false;
     }
 }
 
