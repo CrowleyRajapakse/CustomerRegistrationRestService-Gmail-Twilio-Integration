@@ -1,0 +1,40 @@
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET AUTOCOMMIT = 0;
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `testdb`
+--
+
+ CREATE DATABASE IF NOT EXISTS testdb;
+ USE testdb;
+
+ CREATE TABLE `customer` (
+  `id` int(11) NOT NULL,
+  `age` int(11) DEFAULT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `mobNo` int(20) NOT NULL,
+  `email` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+INSERT INTO `customer` (`id`, `age`, `name`, `mobNo`, `email`) VALUES
+(22, 20, 'Peter', 77123456, 'peter@gmail.com'),
+(25, 13, 'Kate', 112342345, 'kate@gmail.com'),
+(32, 22, 'Krish', 771511551, 'krish@gmail.com'),
+(33, 21, 'Shairam', 771451511, 'shairam@gmail.com');
+
+ALTER TABLE `customer`
+ADD PRIMARY KEY (`id`);
+
+--
+-- AUTO_INCREMENT for table `student`
+--
+ALTER TABLE `customer`
+ MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;

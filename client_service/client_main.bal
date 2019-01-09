@@ -5,14 +5,6 @@ import ballerina/http;
 import ballerina/io;
 import ballerina/log;
 
-// Host name of the server hosting the customer administration system.
-http:Client customerService = new("http://localhost:9292");
-
-twilio:Client twilioClient = new({
-        accountSId: config:getAsString(TWILIO_ACCOUNT_SID),
-        authToken: config:getAsString(TWILIO_AUTH_TOKEN)
-    });
-
 # A valid access token with gmail access.
 string accessToken = config:getAsString("ACCESS_TOKEN");
 
@@ -31,6 +23,34 @@ string senderEmail = config:getAsString("SENDER");
 # The user's email address.
 string userId = config:getAsString("USER_ID");
 
+# A valid SID with Twilio
+string sid = config:getAsString("TWILIO_ACCOUNT_SID");
+
+# A valid Auth Token with Twilio
+string auth = config:getAsString("TWILIO_AUTH_TOKEN");
+
+
+
+// Host name of the server hosting the customer administration system.
+http:Client customerService = new("http://localhost:9292");
+
+// Twilio REST service configurations .
+http:Client httpEndpoint = new("https://api.twilio.com", config = {
+        auth: {
+            scheme: http:BASIC_AUTH,
+            username:sid,
+            password:auth
+        }
+    });
+
+// Twilio Ballerina-Connector Configurations - Not Working Properly
+twilio:Client twilioClient = new({
+
+        accountSId: config:getAsString(TWILIO_ACCOUNT_SID),
+        authToken: config:getAsString(TWILIO_AUTH_TOKEN)
+
+    });
+
 # GMail client endpoint declaration with oAuth2 client configurations.
 gmail:Client gmailClient = new({
         clientConfig: {
@@ -43,8 +63,6 @@ gmail:Client gmailClient = new({
             }
         }
     });
-
-
 
 public function main() {
     http:Request req = new;
@@ -93,7 +111,7 @@ function isInteger(string input) returns boolean {
 
 }
 
-// Function to add details of a student to the database.
+// Function to add details of a customer to the database.
 function addCustomer(http:Request req) {
     // Get customer name, age mobile number, email.
     var name = io:readln("Enter Customer name: ");
@@ -113,7 +131,7 @@ function addCustomer(http:Request req) {
         return;
     }
 
-    // Sending the request to the students service and getting the response from it.
+    // Sending the request to the customer service and getting the response from it.
     var resp = customerService->post("/records/addCustomer", req);
 
     if (resp is http:Response) {
@@ -122,11 +140,12 @@ function addCustomer(http:Request req) {
         if (jsonMsg is json) {
             string message = "Status: " + jsonMsg["Status"] .toString() + " Added Customer Id :- " +
                 jsonMsg["id"].toString();
-            io:println(message);
+            log:printInfo(message);
 
             log:printDebug("CustomerRegistration-Twilio  Integration -> Sending notification to customers");
-            //boolean resultSMS = sendSmsToCustomers(mobile);
-            boolean resultSMS = true;
+
+
+            boolean resultSMS = sendSmsToCustomers(mobile);
             if (resultSMS) {
                 log:printDebug("CustomerRegistration-Twilio Integration -> Registration SMS sending process successfully completed!");
             } else {
@@ -149,27 +168,50 @@ function addCustomer(http:Request req) {
     }
 }
 
-# Utility function integrate CustomerRegistrationService and Twilio connectors and indicates the status of sending.
+# Utility function integrate CustomerRegistrationService and Twilio connectors/Rest API and indicates the status of sending.
 #
 # + return - State of whether the process of sending SMS to customers are success or not
 function sendSmsToCustomers(string mobile) returns boolean {
 
-    boolean isSuccess= false;
-    string toMobile = mobile;
-    string messageBody = config:getAsString(TWILIO_MESSAGE);
-    string fromMobile = config:getAsString(TWILIO_FROM_MOBILE);
-    string message = messageBody;
-    var response = twilioClient->sendSms(fromMobile, toMobile, message);
-    if (response is twilio:SmsResponse) {
-        if (response.sid != EMPTY_STRING) {
-            log:printDebug("Twilio Connector -> SMS successfully sent to " + toMobile);
-            return true;
-        }
+    http:Request req =new;
+    json payload ={
+        From:config:getAsString(TWILIO_FROM_MOBILE),
+        To:config:getAsString(TWILIO_TO_MOBILE)
+    } ;
+    //var text="From=+18125670972&+94717313761&Body=testing";
+    //text.b
+
+    req.setTextPayload("From=%2B18125670972&To=%2B94717313761&Body=testing");
+    req.setHeader( "Content-Type", "application/x-www-form-urlencoded");
+
+
+    var response = httpEndpoint->post("/2010-04-01/Accounts/AC2017862cf42fac3b8b7a497377052064/Messages.json",req);
+    if (response is http:Response) {
+        var result = response.getPayloadAsString();
+        log:printInfo((result is error) ? "Failed to retrieve payload."
+                                        : "Sent SMS to the customer");
     } else {
-        log:printDebug("Twilio Connector -> SMS failed sent to " + toMobile);
-        log:printError(<string>response.detail().message);
+        log:printError("Failed to call the endpoint.", err = response);
     }
-    return isSuccess;
+    return true;
+
+    //Code Related the ballerina-Twilio-Connector
+    //boolean isSuccess= false;
+    //string toMobile = mobile;
+    //string messageBody = config:getAsString("TWILIO_MESSAGE");
+    //string fromMobile = config:getAsString("TWILIO_FROM_MOBILE");
+    //string message = messageBody;
+    //var response = twilioClient->sendSms(fromMobile, toMobile, message);
+    //if (response is twilio:SmsResponse) {
+    //    if (response.sid != EMPTY_STRING) {
+    //        log:printDebug("Twilio Connector -> SMS successfully sent to " + toMobile);
+    //        return true;
+    //    }
+    //} else {
+    //    log:printDebug("Twilio Connector -> SMS failed sent to " + toMobile);
+    //    log:printError(<string>response.detail().message);
+    //}
+    //return isSuccess;
 }
 
 # Returns an indication of the status of the sending notification to the customers.
