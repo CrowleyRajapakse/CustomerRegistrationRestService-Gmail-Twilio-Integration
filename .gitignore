@@ -2,3 +2,4 @@
 ballerina.conf
 .idea/workspace.xml
 *.lck
+.idea/workspace.xml
