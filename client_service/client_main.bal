@@ -29,25 +29,36 @@ string sid = config:getAsString("TWILIO_ACCOUNT_SID");
 # A valid Auth Token with Twilio
 string auth = config:getAsString("TWILIO_AUTH_TOKEN");
 
+# A valid sender mobile number with Twilio
+string senderMobile = config:getAsString("TWILIO_FROM_MOBILE");
+
+# A valid sender mobile number with Twilio
+string receiverMobile = config:getAsString("TWILIO_TO_MOBILE");
+
+# A valid  with Twilio
+string messageSMS = config:getAsString("TWILIO_MESSAGE");
+
+
+
 
 
 // Host name of the server hosting the customer administration system.
 http:Client customerService = new("http://localhost:9292");
 
 // Twilio REST service configurations .
-http:Client httpEndpoint = new("https://api.twilio.com", config = {
-        auth: {
-            scheme: http:BASIC_AUTH,
-            username:sid,
-            password:auth
-        }
-    });
+//http:Client httpEndpoint = new("https://api.twilio.com", config = {
+        //auth: {
+            //scheme: http:BASIC_AUTH,
+            //username:sid,
+            //password:auth
+        //}
+    //});
 
 // Twilio Ballerina-Connector Configurations - Not Working Properly
 twilio:Client twilioClient = new({
 
-        accountSId: config:getAsString(TWILIO_ACCOUNT_SID),
-        authToken: config:getAsString(TWILIO_AUTH_TOKEN)
+        accountSId: sid,
+        authToken: auth
 
     });
 
@@ -138,9 +149,9 @@ function addCustomer(http:Request req) {
         // Extracting data from the received JSON object..
         var jsonMsg = resp.getJsonPayload();
         if (jsonMsg is json) {
-            string message = "Status: " + jsonMsg["Status"] .toString() + " Added Customer Id :- " +
+            string statusMessage = "Status: " + jsonMsg["Status"] .toString() + " Added Customer Id :- " +
                 jsonMsg["id"].toString();
-            log:printInfo(message);
+            log:printInfo(statusMessage);
 
             log:printDebug("CustomerRegistration-Twilio  Integration -> Sending notification to customers");
 
@@ -173,45 +184,42 @@ function addCustomer(http:Request req) {
 # + return - State of whether the process of sending SMS to customers are success or not
 function sendSmsToCustomers(string mobile) returns boolean {
 
-    http:Request req =new;
-    json payload ={
-        From:config:getAsString(TWILIO_FROM_MOBILE),
-        To:config:getAsString(TWILIO_TO_MOBILE)
-    } ;
-    //var text="From=+18125670972&+94717313761&Body=testing";
-    //text.b
+    //http:Request req =new;
+    //json payload ={
+        //From:config:getAsString(TWILIO_FROM_MOBILE),
+        //To:config:getAsString(TWILIO_TO_MOBILE)
+    //} ;
 
-    req.setTextPayload("From=%2B18125670972&To=%2B94717313761&Body=testing");
-    req.setHeader( "Content-Type", "application/x-www-form-urlencoded");
+    //req.setTextPayload("From=%2BXXXXXXXXXX&To=%2BXXXXXXXXX&Body=testing");
+    //req.setHeader( "Content-Type", "application/x-www-form-urlencoded");
 
 
-    var response = httpEndpoint->post("/2010-04-01/Accounts/AC2017862cf42fac3b8b7a497377052064/Messages.json",req);
-    if (response is http:Response) {
-        var result = response.getPayloadAsString();
-        log:printInfo((result is error) ? "Failed to retrieve payload."
-                                        : "Sent SMS to the customer");
-    } else {
-        log:printError("Failed to call the endpoint.", err = response);
-    }
-    return true;
+    //var response = httpEndpoint->post("/2010-04-01/Accounts/{SID}/Messages.json",req);
+    //if (response is http:Response) {
+    //    var result = response.getPayloadAsString();
+    //    log:printInfo((result is error) ? "Failed to retrieve payload."
+    //                                    : "Sent SMS to the customer");
+    //} else {
+    //    log:printError("Failed to call the endpoint.", err = response);
+    //}
+    //return true;
 
     //Code Related the ballerina-Twilio-Connector
-    //boolean isSuccess= false;
-    //string toMobile = mobile;
-    //string messageBody = config:getAsString("TWILIO_MESSAGE");
-    //string fromMobile = config:getAsString("TWILIO_FROM_MOBILE");
-    //string message = messageBody;
-    //var response = twilioClient->sendSms(fromMobile, toMobile, message);
-    //if (response is twilio:SmsResponse) {
-    //    if (response.sid != EMPTY_STRING) {
-    //        log:printDebug("Twilio Connector -> SMS successfully sent to " + toMobile);
-    //        return true;
-    //    }
-    //} else {
-    //    log:printDebug("Twilio Connector -> SMS failed sent to " + toMobile);
-    //    log:printError(<string>response.detail().message);
-    //}
-    //return isSuccess;
+    boolean isSuccess= false;
+    string toMobile = receiverMobile;
+    string fromMobile = senderMobile;
+    string messageBody = messageSMS;
+    var response = twilioClient->sendSms(fromMobile, toMobile, messageBody);
+    if (response is twilio:SmsResponse) {
+        if (response.sid != EMPTY_STRING) {
+            log:printInfo("Twilio Connector -> SMS successfully sent to " + toMobile);
+            return true;
+        }
+    } else {
+        log:printInfo("Twilio Connector -> SMS failed sent to " + toMobile);
+        log:printError(<string>response.detail().message);
+    }
+    return isSuccess;
 }
 
 # Returns an indication of the status of the sending notification to the customers.

@@ -29,7 +29,7 @@ Use the database script given in the resource folder to setup the database
 7. In a separate browser window or tab, visit OAuth 2.0 playground, select the required GMail and Google Sheets API scopes, and then click Authorize APIs.
 8. When you receive your authorization code, click Exchange authorization code for tokens to obtain the refresh token and access token.
 
-####GYou must configure the ballerina.conf configuration file with the above obtained tokens, credentials and other important parameters as follows.  ACCESS_TOKEN="access token"
+####You must configure the ballerina.conf configuration file with the above obtained tokens, credentials and other important parameters as follows.  ACCESS_TOKEN="access token"
   CLIENT_ID="client id"
   CLIENT_SECRET="client secret"
   REFRESH_TOKEN="refresh token"
