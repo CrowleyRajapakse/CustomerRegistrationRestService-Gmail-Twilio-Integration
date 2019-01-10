@@ -30,6 +30,7 @@ Use the database script given in the resource folder to setup the database
 8. When you receive your authorization code, click Exchange authorization code for tokens to obtain the refresh token and access token.
 
 ### You must configure the ballerina.conf configuration file with the above obtained tokens, credentials and other important parameters as follows.  ACCESS_TOKEN="access token"
+  ```
   CLIENT_ID="client id"
   CLIENT_SECRET="client secret"
   REFRESH_TOKEN="refresh token"
@@ -37,6 +38,7 @@ Use the database script given in the resource folder to setup the database
   SHEET_NAME="sheet name of your Goolgle Sheet. For example in above example, SHEET_NAME="Stats"
   SENDER="email address of the sender"
   USER_ID="mail address of the authorized user. You can give this value as, me"
+```
 
 ### Setup Twilio API credentials
 Create a Twilio account and obtain the following parameters:
@@ -47,6 +49,7 @@ Auth Token
 
 Set Twilio credentials in ballerina.conf
 
+```
 TWILIO_ACCOUNT_SID="your_Twilio_account_id"
 
 TWILIO_AUTH_TOKEN="your_Twilio_Auth"
@@ -54,12 +57,15 @@ TWILIO_AUTH_TOKEN="your_Twilio_Auth"
 TWILIO_FROM_MOBILE="your_Twilio_phone_number"
 
 TWILIO_MESSAGE="your_message"
+```
 
 ## Running
 
 1. First run the customer_management_service module by entering the following command in a terminal.
 
+```
 $ ballerina run customers
+```
 
 2. You can see service starting up.
 
@@ -69,10 +75,13 @@ Initiating service(s) in 'customers'
 
 3. Then, using another terminal run the client module.
 
+```
 $ ballerina run client_service
+```
 
 ## Let's now look at sample log statements we get when running the sample for this scenario.
 
+```
 Select operation.
 1. Add customer
 2. View all customers
@@ -119,5 +128,26 @@ Select operation.
 3. Exit
 
 Enter choice 1 - 3: 3
+```
+
+## Testing 
+
+### Invoking the customer management service Tests
+
+You can start test by opening a terminal and executing the following command.
+
+```
+$ ballerina test customers/
+```
+
+### Invoking the client service Tests
+
+First start the customers module by `ballerina run customers/` command.
+
+Then you can start test by opening a terminal and executing the following command.
+ 
+```
+$ ballerina test client_service/
+```
 
 

@@ -32,3 +32,5 @@ java.net.BindException: Address already in use
 	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
 	at java.lang.Thread.run(Thread.java:748)
  
+[2019-01-10 15:53:57,026] WARN  {com.zaxxer.hikari.pool.HikariPool} - HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=4m48s731ms).  
+[2019-01-10 16:26:06,862] WARN  {com.zaxxer.hikari.pool.HikariPool} - HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=31m39s835ms).  
